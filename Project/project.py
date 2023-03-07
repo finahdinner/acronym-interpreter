@@ -2,18 +2,19 @@ import sys
 import random
 import inflect
 from mlconjug3 import Conjugator
+import language_tool_python
 
 
 SENTENCE_STRUCTURES = (
     ("adjective", "noun"),
-    ("adjective", "noun", "verb"),
+    # ("adjective", "noun", "verb"),
     ("adjective", "noun", "verb", "noun"),
-    ("adjective", "noun", "adverb", "verb"),
+    # ("adjective", "noun", "adverb", "verb"),
     ("adjective", "noun", "adverb", "verb", "noun"),
-    ("noun", "verb"),
-    # ("noun", "verb", "noun"),
+    # ("noun", "verb"),
+    ("noun", "verb", "noun"),
     ("noun", "adverb", "verb"),
-    ("adverb", "verb"),
+    # ("adverb", "verb"),
 )
 
  
@@ -30,83 +31,71 @@ def main():
         sys.exit("Usage: python project.py ACRONYM")
   
     acronym = sys.argv[1].lower()
-    if not (sentence_structure := select_sentence_structure(acronym)):
-        sys.exit("Please try an acronym of a different length.")
-  
-    unprocessed_words = select_unprocessed_words(acronym, sentence_structure)
-    print(unprocessed_words)
 
-    ### implement logic to deal with grammar and word endings
-    # for word in unprocessed_words:
-    #     print(ENGINE.plural(word))
+    # carry out the entire process of determining a valid sentence, until a generated sentence makes sense
+    while True:
+
+        if not (sentence_structure := select_sentence_structure(acronym)):
+            sys.exit("Please try an acronym of a different length.")
+    
+        unprocessed_words = select_unprocessed_words(acronym, sentence_structure)
+        # print(unprocessed_words)
+
+        # process the words to make a grammatically-correct sentence
+        # specifically, ensure each noun-verb pair is conjugated correctly
+        words_and_structure = list(zip(unprocessed_words, sentence_structure))
+        # print(words_and_structure)
+        # initialise with None as each value
+        processed_words = [None for word in unprocessed_words]
+        for idx, (word, word_type) in enumerate(words_and_structure):
+            print(idx, word, word_type)
+            print(f"{processed_words=}")
+
+            if word_type == "noun":
+                # randomly switch the noun to either plural or singular
+                grammatical_number = random.choice(["singular", "plural"])
+                print(f"{grammatical_number=}")
+                new_noun = change_sing_plural(word, grammatical_number)
+                processed_words[idx] = new_noun
+
+                # if this noun is the final word, break the loop (since there won't be a verb after it)
+                if idx == len(words_and_structure) - 1:
+                    break
+
+                # if the next word is a verb
+                if words_and_structure[idx+1][1] == "verb":
+                    verb = words_and_structure[idx+1][0]
+                    new_verb = change_verb(verb, grammatical_number)
+                    processed_words[idx+1] = new_verb
+                # if the next words are an adverb and verb, respectively
+                elif words_and_structure[idx+1][1] == "adverb" and words_and_structure[idx+2][1] == "verb":
+                    verb = words_and_structure[idx+2][0]
+                    new_verb = change_verb(verb, grammatical_number)
+                    processed_words[idx+2] = new_verb
 
 
-    words_and_structure = list(zip(unprocessed_words, sentence_structure))
-    print(words_and_structure)
-    # initialise with False as each value
-    processed_words = [False for word in unprocessed_words]
-    for idx, (word, word_type) in enumerate(words_and_structure):
-        print(processed_words)
-        # check if a verb proceeds a noun - if so, ensure the grammar between the two works
-        if word_type == "noun" and idx < len(words_and_structure) - 1 and words_and_structure[idx+1][1] == "verb":
-            # randomly decide if it should be singular or plural
-            grammatical_number = random.choice(["singular", "plural"])
-            new_noun = change_sing_plural(word, grammatical_number)
+            # if not a noun, and this word hasn't been processed already, just leave it as it is
+            elif not processed_words[idx]:
+                processed_words[idx] = word
 
-            verb = words_and_structure[idx+1][0]
-            new_verb = change_verb(verb, grammatical_number)
 
-            print(f"{grammatical_number=}, {word=}, {new_noun=}, {new_verb=}")
+        print(f"{sentence_structure=}")
+        print(f"{unprocessed_words=}")
 
-            # if the result is False, this means there was a keyerror
-            # in this event, just return the unprocessed words
-            if not new_verb:
-                processed_words = unprocessed_words
-                break
+        # complete the sentence if every item in processed_words is a word
+        if all(isinstance(x, str) for x in processed_words):
+            finished_sentence = " ".join(processed_words).title()
+            print(f"{finished_sentence=}")
 
-            processed_words[idx] = new_noun
-            processed_words[idx+1] = new_verb
-
-        # check for noun, adverb, verb
-        elif word_type == "noun" and idx < len(words_and_structure) - 2 and words_and_structure[idx+1][1] == "adverb" and words_and_structure[idx+2][1] == "verb":
-            # randomly decide if it should be singular or plural
-            grammatical_number = random.choice(["singular", "plural"])
-            new_noun = change_sing_plural(word, grammatical_number)
-
-            verb = words_and_structure[idx+2][0]
-            new_verb = change_verb(verb, grammatical_number)
-
-            print(f"{grammatical_number=}, {word=}, {new_noun=}, {new_verb=}")
-
-            # if the result is False, this means there was a keyerror
-            # in this event, just return the unprocessed words
-            if not new_verb:
-                processed_words = unprocessed_words
-                break
-
-            processed_words[idx] = new_noun
-            processed_words[idx+2] = new_verb           
-
-        elif word_type == "noun" and idx == len(words_and_structure) - 1:
-            grammatical_number = random.choice(["singular", "plural"])
-            new_noun = change_sing_plural(word, grammatical_number)   
-
-            print(f"{grammatical_number=}, {word=}, {new_noun=}")    
-
-            processed_words[idx] = new_noun
-
-            # if singular_or_plural(word) == "singular":
-
-            # print("yes")
-
-        # if no changes have been made, and there are no words in the relevant spot in processed_words, add the word
-        elif not processed_words[idx]:
-            processed_words[idx] = word
-
-        print(idx, word, word_type)
-
-    print(f"{unprocessed_words=}")
-    print(f"{processed_words=}")
+        # now check if the finished_sentence makes sense
+        sentence_checker = language_tool_python.LanguageToolPublicAPI('en-US')
+        matches = sentence_checker.check(finished_sentence)
+    
+        # if the sentence doesn't make sense, try the whole process again
+        if matches:
+            continue
+        else: # otherwise, return the sentence and break the loop
+            return finished_sentence
 
 
 def select_sentence_structure(acronym: str) -> tuple | None:
@@ -132,20 +121,10 @@ def select_unprocessed_words(acronym, sentence_structure) -> list[str]:
         with open(f"word-lists/english-{word_type}s.txt", 'r', encoding='utf-8') as f:
             reader = f.readlines()
             filtered_words = filter_lines(reader, starting_letter)
-            print(filtered_words)
+            # print(filtered_words)
             random_word = random.choice(filtered_words)
-            print(random_word)
+            # print(random_word)
             selected_words.append(random_word)
-
-            # num_lines = len(filtered_words)
-            # random_number = random.randint(0, num_lines-1)
-            # random_word = filtered_words[random_number].strip().capitalize()
-
-            ### REPLACE THIS
-            # if word_type == "verb":
-            #     random_word += random.choice(VERB_ENDINGS)
-            #     if random_word[-4:] == 'eing':
-            #         random_word = random_word.replace('eing', 'ing')
 
     return selected_words
 
@@ -206,6 +185,5 @@ if __name__ == "__main__":
     # print(results["indicative"]["we"]["I"])
 
     # print(change_verb("educate", "plural"))
-
 
     main()
