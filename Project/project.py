@@ -24,7 +24,7 @@ ENGINE = inflect.engine()
 CONJUGATOR = Conjugator(language="en")
 
 
-def main():
+def main() -> str:
     """ Main function."""
 
     if len(sys.argv) != 2:
@@ -55,7 +55,7 @@ def main():
                 # randomly switch the noun to either plural or singular
                 grammatical_number = random.choice(["singular", "plural"])
                 print(f"{grammatical_number=}")
-                new_noun = change_sing_plural(word, grammatical_number)
+                new_noun = change_noun_sing_plural(word, grammatical_number)
                 processed_words[idx] = new_noun
 
                 # if this noun is the final word, break the loop (since there won't be a verb after it)
@@ -65,12 +65,12 @@ def main():
                 # if the next word is a verb
                 if words_and_structure[idx+1][1] == "verb":
                     verb = words_and_structure[idx+1][0]
-                    new_verb = change_verb(verb, grammatical_number)
+                    new_verb = change_verb_conjugation(verb, grammatical_number)
                     processed_words[idx+1] = new_verb
                 # if the next words are an adverb and verb, respectively
                 elif words_and_structure[idx+1][1] == "adverb" and words_and_structure[idx+2][1] == "verb":
                     verb = words_and_structure[idx+2][0]
-                    new_verb = change_verb(verb, grammatical_number)
+                    new_verb = change_verb_conjugation(verb, grammatical_number)
                     processed_words[idx+2] = new_verb
 
 
@@ -88,14 +88,22 @@ def main():
             print(f"{finished_sentence=}")
 
         # now check if the finished_sentence makes sense
-        sentence_checker = language_tool_python.LanguageToolPublicAPI('en-US')
-        matches = sentence_checker.check(finished_sentence)
-    
-        # if the sentence doesn't make sense, try the whole process again
-        if matches:
-            continue
-        else: # otherwise, return the sentence and break the loop
+
+        if sentence_makes_sense(finished_sentence):
             return finished_sentence
+        else:
+            continue
+
+
+
+        # sentence_checker = language_tool_python.LanguageToolPublicAPI('en-US')
+        # matches = sentence_checker.check(finished_sentence)
+    
+        # # if the sentence doesn't make sense, try the whole process again
+        # if matches:
+        #     continue
+        # else: # otherwise, return the sentence and break the loop
+        #     return finished_sentence
 
 
 def select_sentence_structure(acronym: str) -> tuple | None:
@@ -120,7 +128,9 @@ def select_unprocessed_words(acronym, sentence_structure) -> list[str]:
     for starting_letter, word_type in structure_and_letters:
         with open(f"word-lists/english-{word_type}s.txt", 'r', encoding='utf-8') as f:
             reader = f.readlines()
+            print(f"{reader=}")
             filtered_words = filter_lines(reader, starting_letter)
+            print(f"{filtered_words=}")
             # print(filtered_words)
             random_word = random.choice(filtered_words)
             # print(random_word)
@@ -136,12 +146,7 @@ def filter_lines(reader, letter) -> list:
     return [line.strip() for line in filtered_reader]
 
 
-def singular_or_plural(word) -> str:
-    """ Determine whether a word is singular or plural """
-    return "singular" if not ENGINE.singular_noun(word) else "plural"
-
-
-def change_sing_plural(word: str, grammatical_number: str) -> str | bool:
+def change_noun_sing_plural(word: str, grammatical_number: str) -> str | bool:
     if grammatical_number == "plural":
         return ENGINE.plural_noun(word)
 
@@ -150,7 +155,7 @@ def change_sing_plural(word: str, grammatical_number: str) -> str | bool:
     return word
 
 
-def change_verb(verb: str, grammatical_number: str) -> str | bool:
+def change_verb_conjugation(verb: str, grammatical_number: str) -> str | bool:
     verb_results = CONJUGATOR.conjugate(verb)
     if grammatical_number == "singular":
         grammar_val = "he/she/it"
@@ -165,25 +170,16 @@ def change_verb(verb: str, grammatical_number: str) -> str | bool:
         return new_verb
 
 
+def sentence_makes_sense(sentence) -> bool:
+    sentence_checker = language_tool_python.LanguageToolPublicAPI('en-US')
+    matches = sentence_checker.check(sentence)
+
+    # if matches are found, this means errors were found in the sentence
+    if matches:
+        return False
+    
+    return True
+
+
 if __name__ == "__main__":
-
-    # checking if noun is plural or singular
-    # words = ["man", "people", "cats", "cat", "dogs"]
-    # for word in words:
-    #     print(singular_or_plural(word))
-        # print(f"is {word} singular? {engine.singular_noun(word) == word} ")
-
-
-    # checking verb conjugations
-    # conjugator = Conjugator(language="en")
-    # results = conjugator.conjugate("educate")
-    # print(results.iterate())
-    # print("----------")
-    # print(results["indicative"]["indicative present"]["he/she/it"])
-    # print(results["indicative"]["indicative present"]["they"])
-    # print(results["indiecative"]["indicative present"]["he/she/it"])
-    # print(results["indicative"]["we"]["I"])
-
-    # print(change_verb("educate", "plural"))
-
     main()
