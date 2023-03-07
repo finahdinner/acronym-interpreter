@@ -1,7 +1,4 @@
 # Acronym Interpreter - CS50P Final Project
-
-**Video Demo:** https://youtu.be/SzMX_717xH8
-
 ---
 
 Acronym Interpreter, ironically known as AI, is a Python script that will attempt to "interpret" a given acronym, effectively reverse-translating it.
