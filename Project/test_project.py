@@ -45,39 +45,3 @@ def test_sentence_makes_sense():
     assert sentence_makes_sense("I like appples") is False
     assert sentence_makes_sense("Hello, I like turtles") is True
     assert sentence_makes_sense("Hello I like turtles") is False
-
-
-# def ting2(sentence):
-#     return sentence_makes_sense(sentence)
-
-
-
-# file_loc = "word-lists/english-nouns.txt"
-# starting_letter = "t"
-# with open(file_loc, "r", encoding="utf-8") as f:
-#     reader = f.readlines()
-#     filtered_words = filter_lines(reader, starting_letter)
-#     print(filtered_words)
-#     print(len(filtered_words))
-#     words_starting_with_starting_letter = [word for word in filtered_words if word[0] == starting_letter]
-#     print(words_starting_with_starting_letter)
-#     print(len(words_starting_with_starting_letter))
-#     print(filtered_words == words_starting_with_starting_letter)
-
-
-
-# def ting1():
-#     """ ting1 """
-#     sentence_structure = ("adjective", "noun", "adverb", "verb", "noun")
-#     acronym = "hello"
-#     structure_and_letters = list(zip(acronym, sentence_structure))
-#     print(f"{structure_and_letters=}")
-#     # unprocessed_words =  select_unprocessed_words(acronym, sentence_structure)
-#     # print(unprocessed_words)
-
-# ting1()
-
-# print(ting2("Hello, I like turtles"))
-# print(ting2("I like apples"))
-# print(ting2("I like appples"))
-# print(ting2("i like apples"))
