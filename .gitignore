@@ -1,6 +1,7 @@
 # My additions
 project_env/
 Project/ideas.txt
+Project/.vscode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
